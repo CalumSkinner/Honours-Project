@@ -14,7 +14,7 @@ ACreatureBase::ACreatureBase()
 
 	for (int i = 0; i < 4; i++) {
 
-		moveList.Add(defaultMove);
+		MoveList.Add(defaultMove);
 
 	}
 
@@ -26,10 +26,10 @@ void ACreatureBase::BeginPlay()
 	Super::BeginPlay();
 	
 	// Set to full health
-	healthCurrent = healthMax;
+	HealthCurrent = Stats.HealthMax;
 
 	// Roll random initiative value based on modifier
-	initiativeRoll = DiceRoll(1, 20) + initiativeMod;
+	InitiativeRoll = FDice::Roll(1, 20) + Stats.InitiativeMod;
 
 }
 
@@ -40,39 +40,21 @@ void ACreatureBase::Tick(float DeltaTime)
 
 }
 
-int ACreatureBase::DiceRoll(int count, int size) {
-
-	int result = 0;
-
-	GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, FString::Printf(TEXT("Rolling %iD%i"), count, size));
-
-	for (int i = 0; i < count; i++) {
-
-		result += FMath::RandRange(1, size);
-
-	}
-
-	GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, FString::Printf(TEXT("Rolled %i"), result));
-
-	return result;
-
-}
-
 int ACreatureBase::GetInitiativeRoll() {
 
-	return initiativeRoll;
+	return InitiativeRoll;
 
 }
 
 // Function to use a selected move, takes the move to be used and the target to use it on
-void ACreatureBase::UseMove(FMove move, ACreatureBase* target)
+void ACreatureBase::UseMove(FMove Move, ACreatureBase* Target)
 {
 
 	// Announce move with user and target
-	GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, name + " uses " + move.name + " on " + target->name);
+	GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, Stats.Name + " uses " + Move.Name + " on " + Target->Stats.Name);
 
 	// Roll to hit (1d20) using hit modifier of the move
-	int attackRoll = DiceRoll(1, 20) + move.hitMod;
+	int attackRoll = FDice::Roll(1, 20) + Move.HitMod;
 
 	if (GEngine) {
 
@@ -80,7 +62,7 @@ void ACreatureBase::UseMove(FMove move, ACreatureBase* target)
 
 	}
 
-	if (attackRoll >= target->GetArmourClass()) {
+	if (attackRoll >= Target->GetArmourClass()) {
 
 		if (GEngine) {
 
@@ -89,10 +71,10 @@ void ACreatureBase::UseMove(FMove move, ACreatureBase* target)
 		}
 
 		// Roll damage amount based on damage values of the move
-		int damage = DiceRoll(move.damageRolls, move.damageDie) + move.damageMod;
+		int damage = FDice::Roll(Move.DamageRolls, Move.DamageDie) + Move.DamageMod;
 
 		// Damage target by total damage amount
-		target->SetHealth(target->GetHealth() - damage);
+		Target->SetHealth(Target->GetHealth() - damage);
 
 	}
 	else
@@ -112,15 +94,15 @@ void ACreatureBase::UseMove(FMove move, ACreatureBase* target)
 int ACreatureBase::GetHealth()
 {
 
-	return healthCurrent;
+	return HealthCurrent;
 
 }
 
 // Function to set health to a given value
-void ACreatureBase::SetHealth(int value)
+void ACreatureBase::SetHealth(int Value)
 {
 
-	healthCurrent = value;
+	HealthCurrent = Value;
 
 }
 
@@ -128,6 +110,6 @@ void ACreatureBase::SetHealth(int value)
 int ACreatureBase::GetArmourClass() 
 {
 
-	return armourClass;
+	return Stats.ArmourClass;
 
 }

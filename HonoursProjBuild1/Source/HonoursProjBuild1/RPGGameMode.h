@@ -24,7 +24,7 @@ public:
 
 	// Function to add a new creature to the correct space on the initiative tracker
 	UFUNCTION(BluePrintCallable)
-	void AddCreature(ACreatureBase* creature);
+	void AddCreature(UClass* CreatureToSpawn);
 
 protected:
 

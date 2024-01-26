@@ -23,41 +23,54 @@ void ARPGGameMode::Tick(float DeltaTime)
 
 }
 
-// Function to add a new creature to the correct space on the initiative tracker
-void ARPGGameMode::AddCreature(ACreatureBase* creature) {
+// Function to spawn a new creature and add it to the initiative tracker
+void ARPGGameMode::AddCreature(UClass* CreatureToSpawn) {
 
-	// If tracker is empty add to the first entry
-	if (initiativeOrder.IsEmpty()) {
+	// Spawn info
+	FVector location(0.0f, 0.0f, 0.0f);
+	FRotator rotation(0.0f, 0.0f, 0.0f);
+	FActorSpawnParameters spawnParams;
 
-		initiativeOrder.Add(creature);
+	// Spawn actor
+	ACreatureBase* creature = Cast<ACreatureBase>(GetWorld()->SpawnActor<AActor>(CreatureToSpawn, location, rotation, spawnParams));
 
-	}
-	else {
+	// Check whether actor spawned successfully
+	if (creature != nullptr) {
 
-		bool added = false;
-
-		// Check initiative roll against the current array entries and add when initiative roll is higher than the current entry
-		for (int i = 0; i < initiativeOrder.Num(); i++) {
-
-			if (creature->GetInitiativeRoll() > initiativeOrder[i]->GetInitiativeRoll()) {
-
-				initiativeOrder.Insert(creature, i);
-				added = true;
-				break;
-
-			}
-			else {
-
-				i++;
-
-			}
-
-		}
-
-		// If the end of the array is reached and entry has still not been added, add to the end of the array
-		if (!added) {
+		// If tracker is empty add to the first entry
+		if (initiativeOrder.IsEmpty()) {
 
 			initiativeOrder.Add(creature);
+
+		}
+		else {
+
+			bool added = false;
+
+			// Check initiative roll against the current array entries and add when initiative roll is higher than the current entry
+			for (int i = 0; i < initiativeOrder.Num(); i++) {
+
+				if (creature->GetInitiativeRoll() > initiativeOrder[i]->GetInitiativeRoll()) {
+
+					initiativeOrder.Insert(creature, i);
+					added = true;
+					break;
+
+				}
+				else {
+
+					i++;
+
+				}
+
+			}
+
+			// If the end of the array is reached and entry has still not been added, add to the end of the array
+			if (!added) {
+
+				initiativeOrder.Add(creature);
+
+			}
 
 		}
 
