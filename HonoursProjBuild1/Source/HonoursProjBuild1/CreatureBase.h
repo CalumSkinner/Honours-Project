@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "DataStructs.h"
+#include "Kismet/GameplayStatics.h"
 #include "GameFramework/Actor.h"
 #include "CreatureBase.generated.h"
 
@@ -20,9 +21,11 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
+	// Variables
+
 	// StatSheet struct to hold characters core stats
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		FStatSheet Stats;
+		FStatSheet BaseStats;
 
 	// Current health value
 	UPROPERTY(EditAnywhere, BluePrintReadWrite)
@@ -36,16 +39,39 @@ protected:
 	UPROPERTY(EditAnywhere, BluePrintReadWrite)
 		TArray<FMove> MoveList;
 
+	// Map holding status effects currently applied to this creature and their durations
+	UPROPERTY()
+		TMap<EStatusEffect, int> CurrentEffects;
+
+	// Function to update status effect durations
+	UFUNCTION()
+		void UpdateEffects();
+
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
+	// Functions
+
+	// Function to update creature at the start of a new turn
+	UFUNCTION(BlueprintCallable)
+		void TurnStart();
+
+	// Function to use a selected move
+	UFUNCTION(BlueprintCallable)
+		void UseMove(FMove Move, ACreatureBase* Target);
+
+	// Function to apply a status effect to this creature
+	UFUNCTION()
+		void AddEffect(EStatusEffect Effect, int Duration);
+
+	// Function to return the initiative roll for this creature
 	UFUNCTION()
 		int GetInitiativeRoll();
 
-	// Function to attack another creature
+	// Function to return the stat sheet for this creature
 	UFUNCTION(BluePrintCallable)
-		void UseMove(FMove Move, ACreatureBase* Target);
+		FStatSheet GetStats();
 
 	// Function to return current health value
 	UFUNCTION(BluePrintCallable)
@@ -54,9 +80,5 @@ public:
 	// Function to set health to a given value
 	UFUNCTION(BluePrintCallable)
 		void SetHealth(int Value);
-
-	// Function to return current armour value
-	UFUNCTION(BluePrintCallable)
-		int GetArmourClass();
 
 };

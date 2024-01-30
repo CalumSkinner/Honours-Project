@@ -19,7 +19,7 @@ void ARPGGameMode::BeginPlay()
 void ARPGGameMode::Tick(float DeltaTime)
 {
 
-
+	
 
 }
 
@@ -38,9 +38,9 @@ void ARPGGameMode::AddCreature(UClass* CreatureToSpawn) {
 	if (creature != nullptr) {
 
 		// If tracker is empty add to the first entry
-		if (initiativeOrder.IsEmpty()) {
+		if (InitiativeOrder.IsEmpty()) {
 
-			initiativeOrder.Add(creature);
+			InitiativeOrder.Add(creature);
 
 		}
 		else {
@@ -48,11 +48,11 @@ void ARPGGameMode::AddCreature(UClass* CreatureToSpawn) {
 			bool added = false;
 
 			// Check initiative roll against the current array entries and add when initiative roll is higher than the current entry
-			for (int i = 0; i < initiativeOrder.Num(); i++) {
+			for (int i = 0; i < InitiativeOrder.Num(); i++) {
 
-				if (creature->GetInitiativeRoll() > initiativeOrder[i]->GetInitiativeRoll()) {
+				if (creature->GetInitiativeRoll() > InitiativeOrder[i]->GetInitiativeRoll()) {
 
-					initiativeOrder.Insert(creature, i);
+					InitiativeOrder.Insert(creature, i);
 					added = true;
 					break;
 
@@ -68,7 +68,7 @@ void ARPGGameMode::AddCreature(UClass* CreatureToSpawn) {
 			// If the end of the array is reached and entry has still not been added, add to the end of the array
 			if (!added) {
 
-				initiativeOrder.Add(creature);
+				InitiativeOrder.Add(creature);
 
 			}
 

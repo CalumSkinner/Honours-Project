@@ -26,10 +26,12 @@ void ACreatureBase::BeginPlay()
 	Super::BeginPlay();
 	
 	// Set to full health
-	HealthCurrent = Stats.HealthMax;
+	HealthCurrent = BaseStats.HealthMax;
 
 	// Roll random initiative value based on modifier
-	InitiativeRoll = FDice::Roll(1, 20) + Stats.InitiativeMod;
+	InitiativeRoll = FDice::Roll(1, 20) + BaseStats.InitiativeMod;
+
+	AddEffect(EStatusEffect::Stunned, 3);
 
 }
 
@@ -40,18 +42,45 @@ void ACreatureBase::Tick(float DeltaTime)
 
 }
 
-int ACreatureBase::GetInitiativeRoll() {
+// Function to update creature at the start of a new turn
+void ACreatureBase::TurnStart() {
 
-	return InitiativeRoll;
+	// Update status effects
+	UpdateEffects();
 
 }
 
-// Function to use a selected move, takes the move to be used and the target to use it on
-void ACreatureBase::UseMove(FMove Move, ACreatureBase* Target)
-{
+// Function to update status effect durations
+void ACreatureBase::UpdateEffects() {
+
+	// Check for any status effects
+	if (!CurrentEffects.IsEmpty()) {
+
+		// Loop through all current status effects
+		for (auto& Effect : CurrentEffects) {
+
+			GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, BaseStats.Name);
+			GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, FString::Printf(TEXT("Stunned for %i turns."), Effect.Value));
+
+			// Check whether effect is active
+			if (Effect.Value > 0) {
+
+				// Reduce duration by 1 turn
+				Effect.Value -= 1;
+
+			}
+
+		}
+
+	}
+
+}
+
+// Function to use a selected move
+void ACreatureBase::UseMove(FMove Move, ACreatureBase* Target) {
 
 	// Announce move with user and target
-	GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, Stats.Name + " uses " + Move.Name + " on " + Target->Stats.Name);
+	GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, BaseStats.Name + " uses " + Move.Name + " on " + Target->GetStats().Name);
 
 	// Roll to hit (1d20) using hit modifier of the move
 	int attackRoll = FDice::Roll(1, 20) + Move.HitMod;
@@ -62,11 +91,19 @@ void ACreatureBase::UseMove(FMove Move, ACreatureBase* Target)
 
 	}
 
-	if (attackRoll >= Target->GetArmourClass()) {
+	// Move has hit
+	if (attackRoll >= Target->GetStats().ArmourClass) {
 
 		if (GEngine) {
 
 			GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, TEXT("Hit"));
+
+		}
+
+		// Play sound to indicate hit
+		if (Move.HitSound) {
+
+			UGameplayStatics::PlaySound2D(GetWorld(), Move.HitSound);
 
 		}
 
@@ -77,8 +114,16 @@ void ACreatureBase::UseMove(FMove Move, ACreatureBase* Target)
 		Target->SetHealth(Target->GetHealth() - damage);
 
 	}
+	// Move has missed
 	else
 	{
+
+		// Play sound to indicate miss
+		if (Move.MissSound) {
+
+			UGameplayStatics::PlaySound2D(GetWorld(), Move.MissSound);
+
+		}
 
 		if (GEngine) {
 
@@ -87,6 +132,42 @@ void ACreatureBase::UseMove(FMove Move, ACreatureBase* Target)
 		}
 
 	}
+
+}
+
+// Function to apply a status effect to this creature
+void ACreatureBase::AddEffect(EStatusEffect Effect, int Duration) {
+
+	// Check whether this effect is already active, add to the current duration if so
+	if (CurrentEffects.Contains(Effect)) {
+
+		// Add new duration to current duration
+		int newDuration = CurrentEffects[Effect] + Duration;
+
+		// Add updated entry to map
+		CurrentEffects.Add(Effect, newDuration);
+
+	}
+	else {
+
+		// Add status effect and duration to map
+		CurrentEffects.Add(Effect, Duration);
+
+	}
+
+}
+
+// Function to return the initiative roll for this creature
+int ACreatureBase::GetInitiativeRoll() {
+
+	return InitiativeRoll;
+
+}
+
+// Function to return the stat sheet for this creature
+FStatSheet ACreatureBase::GetStats() {
+
+	return BaseStats;
 
 }
 
@@ -103,13 +184,5 @@ void ACreatureBase::SetHealth(int Value)
 {
 
 	HealthCurrent = Value;
-
-}
-
-// Function to return current armour value
-int ACreatureBase::GetArmourClass() 
-{
-
-	return Stats.ArmourClass;
 
 }

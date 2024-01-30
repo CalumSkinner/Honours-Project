@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Sound/SoundCue.h"
 #include "DataStructs.generated.h"
 
 // Dice roller, contains static method used to roll a number of dice of a given size
@@ -31,6 +32,23 @@ public:
 
 };
 
+// Enum to differentiate between friendly and enemy characters
+UENUM(BlueprintType)
+enum class ETeam : uint8 {
+
+	Friendly UMETA(DisplayName = "Friendly"),
+	Enemy UMETA(DisplayName = "Enemy"),
+
+};
+
+// Enum of different status effects that can be applied
+UENUM(BlueprintType)
+enum class EStatusEffect : uint8 {
+
+	Stunned UMETA(DisplayName = "Stunned"),
+
+};
+
 // Struct to hold a characters core stats
 USTRUCT(BlueprintType)
 struct FStatSheet {
@@ -42,6 +60,10 @@ public:
 	// Name
 	UPROPERTY(EditAnywhere, BluePrintReadWrite)
 		FString Name = "Unnamed Character";
+
+	// Team
+	UPROPERTY(EditAnywhere, BluePrintReadWrite)
+		ETeam Team = ETeam::Enemy;
 
 	// Maximum health
 	UPROPERTY(EditAnywhere, BluePrintReadWrite)
@@ -62,14 +84,6 @@ USTRUCT(BlueprintType)
 struct FMove {
 
 	GENERATED_BODY()
-
-public:
-
-	void Use(AActor* Target) {
-
-
-
-	}
 
 public:
 
@@ -100,5 +114,17 @@ public:
 	// Additional damage modifier to be added after random damage is rolled
 	UPROPERTY(EditAnywhere, BluePrintReadWrite)
 		int DamageMod = 3;
+
+	// Sound cue for when the move is selected
+	UPROPERTY(EditAnywhere, BluePrintReadWrite)
+		USoundCue* ReadySound = nullptr;
+
+	// Sound cue for when the move hits
+	UPROPERTY(EditAnywhere, BluePrintReadWrite)
+		USoundCue* HitSound = nullptr;
+
+	// Sound cue for when the move misses
+	UPROPERTY(EditAnywhere, BluePrintReadWrite)
+		USoundCue* MissSound = nullptr;
 
 };

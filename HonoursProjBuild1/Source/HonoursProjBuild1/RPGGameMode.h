@@ -31,6 +31,6 @@ protected:
 	virtual void BeginPlay() override;
 
 	UPROPERTY(EditAnywhere, BluePrintReadWrite)
-	TArray<ACreatureBase*> initiativeOrder;
+	TArray<ACreatureBase*> InitiativeOrder;
 
 };
