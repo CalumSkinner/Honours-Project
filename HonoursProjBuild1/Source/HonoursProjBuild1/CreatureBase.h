@@ -59,7 +59,7 @@ public:
 
 	// Function to use a selected move
 	UFUNCTION(BlueprintCallable)
-		void UseMove(FMove Move, ACreatureBase* Target);
+		void UseMove(FMove Move, TArray<ACreatureBase*> Targets);
 
 	// Function to apply a status effect to this creature
 	UFUNCTION()
@@ -72,6 +72,10 @@ public:
 	// Function to return the stat sheet for this creature
 	UFUNCTION(BluePrintCallable)
 		FStatSheet GetStats();
+
+	// Function to return move list
+	UFUNCTION()
+		TArray<FMove> GetMoveList();
 
 	// Function to return current health value
 	UFUNCTION(BluePrintCallable)

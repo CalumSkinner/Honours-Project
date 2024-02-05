@@ -77,57 +77,62 @@ void ACreatureBase::UpdateEffects() {
 }
 
 // Function to use a selected move
-void ACreatureBase::UseMove(FMove Move, ACreatureBase* Target) {
+void ACreatureBase::UseMove(FMove Move, TArray<ACreatureBase*> Targets) {
 
-	// Announce move with user and target
-	GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, BaseStats.Name + " uses " + Move.Name + " on " + Target->GetStats().Name);
+	// Iterate through list of selected targets
+	for (int i = 0; i < Targets.Num(); i++) {
 
-	// Roll to hit (1d20) using hit modifier of the move
-	int attackRoll = FDice::Roll(1, 20) + Move.HitMod;
+		// Announce move with user and target
+		GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, BaseStats.Name + " uses " + Move.Name + " on " + Targets[i]->GetStats().Name);
 
-	if (GEngine) {
-
-		GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, FString::Printf(TEXT("Rolled %i total to hit"), attackRoll));
-
-	}
-
-	// Move has hit
-	if (attackRoll >= Target->GetStats().ArmourClass) {
+		// Roll to hit (1d20) using hit modifier of the move
+		int attackRoll = FDice::Roll(1, 20) + Move.HitMod;
 
 		if (GEngine) {
 
-			GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, TEXT("Hit"));
+			GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, FString::Printf(TEXT("Rolled %i total to hit"), attackRoll));
 
 		}
 
-		// Play sound to indicate hit
-		if (Move.HitSound) {
+		// Move has hit
+		if (attackRoll >= Targets[i]->GetStats().ArmourClass) {
 
-			UGameplayStatics::PlaySound2D(GetWorld(), Move.HitSound);
+			if (GEngine) {
+
+				GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, TEXT("Hit"));
+
+			}
+
+			// Play sound to indicate hit
+			if (Move.HitSound) {
+
+				UGameplayStatics::PlaySound2D(GetWorld(), Move.HitSound);
+
+			}
+
+			// Roll damage amount based on damage values of the move
+			int damage = FDice::Roll(Move.DamageRolls, Move.DamageDie) + Move.DamageMod;
+
+			// Damage target by total damage amount
+			Targets[i]->SetHealth(Targets[i]->GetHealth() - damage);
 
 		}
+		// Move has missed
+		else
+		{
 
-		// Roll damage amount based on damage values of the move
-		int damage = FDice::Roll(Move.DamageRolls, Move.DamageDie) + Move.DamageMod;
+			// Play sound to indicate miss
+			if (Move.MissSound) {
 
-		// Damage target by total damage amount
-		Target->SetHealth(Target->GetHealth() - damage);
+				UGameplayStatics::PlaySound2D(GetWorld(), Move.MissSound);
 
-	}
-	// Move has missed
-	else
-	{
+			}
 
-		// Play sound to indicate miss
-		if (Move.MissSound) {
+			if (GEngine) {
 
-			UGameplayStatics::PlaySound2D(GetWorld(), Move.MissSound);
+				GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, TEXT("Miss"));
 
-		}
-
-		if (GEngine) {
-
-			GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, TEXT("Miss"));
+			}
 
 		}
 
@@ -168,6 +173,13 @@ int ACreatureBase::GetInitiativeRoll() {
 FStatSheet ACreatureBase::GetStats() {
 
 	return BaseStats;
+
+}
+
+// Function to return move list
+TArray<FMove> ACreatureBase::GetMoveList() {
+
+	return MoveList;
 
 }
 
