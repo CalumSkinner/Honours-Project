@@ -34,7 +34,7 @@ public:
 	virtual void InitCombat();
 
 	// Function to set up the beginning of a new turn
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION()
 	void TurnStart();
 
 	// Function to progress to the next turn
@@ -42,7 +42,7 @@ public:
 	void NextTurn();
 
 	// Function to add a new creature to the correct space on the initiative tracker
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION()
 	void AddCreature(UClass* CreatureToSpawn);
 
 	// Function to navigate the appropriate array using inputs
@@ -56,6 +56,10 @@ public:
 protected:
 
 	virtual void BeginPlay() override;
+
+	// Array storing creatures to be added to this combat, can be altered for each level
+	UPROPERTY(EditAnywhere, BluePrintReadWrite)
+	TArray<UClass*> CreaturesToSpawn;
 
 	// Array to hold all creatures for this combat in initiative order
 	UPROPERTY(EditAnywhere, BluePrintReadWrite)

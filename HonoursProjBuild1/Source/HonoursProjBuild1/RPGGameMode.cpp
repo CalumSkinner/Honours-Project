@@ -17,6 +17,9 @@ void ARPGGameMode::BeginPlay()
 	// Initialise combat
 	InitCombat();
 
+	// Enable input
+	EnableInput(GetWorld()->GetFirstPlayerController());
+
 }
 
 void ARPGGameMode::Tick(float DeltaTime)
@@ -26,10 +29,18 @@ void ARPGGameMode::Tick(float DeltaTime)
 
 }
 
-// Function to initialise this combat, different levels will override this to add different creatures
+// Function to initialise this combat, adding units to initiative tracker and setting up first turn
 void ARPGGameMode::InitCombat() {
 
+	// Iterate through creatures to spawn and add each to the initiative tracker
+	for (int i = 0; i < CreaturesToSpawn.Num(); i++) {
 
+		AddCreature(CreaturesToSpawn[i]);
+
+	}
+
+	// Start first turn
+	TurnStart();
 
 }
 
@@ -140,13 +151,32 @@ void ARPGGameMode::Navigate(bool Positive) {
 
 	}
 
-	// Switch statement to determine which array is being navigated
+	// Switch statement to determine max size of array
 	switch (State) {
 
 	// Selecting a move to use
 	case (EGameState::MoveSelect):
 
 		max = MoveList.Num() - 1;
+
+		// Clamp value based on array size
+		if (Navigator > max) {
+
+			Navigator = 0;
+
+		}
+		else if (Navigator < 0) {
+
+			Navigator = max;
+
+		}
+
+		// Play ready sound for move we have just navigated to
+		if (MoveList[Navigator].ReadySound) {
+
+			UGameplayStatics::PlaySound2D(GetWorld(), MoveList[Navigator].ReadySound);
+
+		}
 
 		break;
 
@@ -155,24 +185,24 @@ void ARPGGameMode::Navigate(bool Positive) {
 
 		max = ValidTargets.Num() - 1;
 
+		// Clamp value based on array size
+		if (Navigator > max) {
+
+			Navigator = 0;
+
+		}
+		else if (Navigator < 0) {
+
+			Navigator = max;
+
+		}
+
 		break;
 
 	// Enemy turn, inputs not registered
 	case (EGameState::EnemyTurn):
 
 		break;
-
-	}
-
-	// Clamp value based on array size
-	if (Navigator > max) {
-
-		Navigator = 0;
-
-	}
-	else if (Navigator < 0) {
-
-		Navigator = max;
 
 	}
 
@@ -211,8 +241,15 @@ void ARPGGameMode::Select() {
 	case (EGameState::TargetSelect):
 
 		// Add selected unit to list of targets and remove from valid targets list
-		SelectedTargets.Add(ValidTargets[Navigator]);
-		ValidTargets.RemoveAt(Navigator);
+		if (ValidTargets[Navigator]) {
+
+			SelectedTargets.Add(ValidTargets[Navigator]);
+			ValidTargets.RemoveAt(Navigator);
+
+			// Reset navigator
+			Navigator = 0;
+
+		}
 
 		GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, FString::Printf(TEXT("Target Selected")));
 

@@ -54,11 +54,11 @@ public:
 	// Functions
 
 	// Function to update creature at the start of a new turn
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION()
 		void TurnStart();
 
 	// Function to use a selected move
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION()
 		void UseMove(FMove Move, TArray<ACreatureBase*> Targets);
 
 	// Function to apply a status effect to this creature
@@ -82,7 +82,7 @@ public:
 		int GetHealth();
 
 	// Function to set health to a given value
-	UFUNCTION(BluePrintCallable)
+	UFUNCTION()
 		void SetHealth(int Value);
 
 };
