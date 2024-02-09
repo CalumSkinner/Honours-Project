@@ -21,31 +21,57 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
+	// Functions
+
+	// Function to update status effect durations
+	UFUNCTION()
+	void UpdateEffects();
+
+	// Function to play a given sound cue, used as timer delegate for delayed sound function
+	UFUNCTION()
+	void PlaySound(USoundCue* SoundCue);
+
+	// Function to play a given sound cue after a specified delay in seconds
+	UFUNCTION()
+	void PlaySoundWithDelay(USoundCue* SoundCue, float Delay);
+
 	// Variables
 
 	// StatSheet struct to hold characters core stats
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		FStatSheet BaseStats;
+	FStatSheet BaseStats;
 
 	// Current health value
-	UPROPERTY(EditAnywhere, BluePrintReadWrite)
-		int HealthCurrent = 30;
+	UPROPERTY()
+	int HealthCurrent = 30;
 
 	// Value to store initiative for current combat
-	UPROPERTY(EditAnywhere, BluePrintReadWrite)
-		int InitiativeRoll = 0;
+	UPROPERTY()
+	int InitiativeRoll = 0;
 
 	// List of available moves
-	UPROPERTY(EditAnywhere, BluePrintReadWrite)
-		TArray<FMove> MoveList;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TArray<FMove> MoveList;
 
 	// Map holding status effects currently applied to this creature and their durations
 	UPROPERTY()
-		TMap<EStatusEffect, int> CurrentEffects;
+	TMap<EStatusEffect, int> CurrentEffects;
 
-	// Function to update status effect durations
-	UFUNCTION()
-		void UpdateEffects();
+	// Sound cue to play when activated (High HP)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	USoundCue* ReadySoundHigh;
+
+	// Sound cue to play when activated (Medium HP)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	USoundCue* ReadySoundMedium;
+
+	// Sound cue to play when activated (Low HP)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	USoundCue* ReadySoundLow;
+
+	// Sound cue for when a move misses
+	UPROPERTY()
+	USoundCue* MissSound;
 
 public:	
 	// Called every frame
@@ -55,34 +81,48 @@ public:
 
 	// Function to update creature at the start of a new turn
 	UFUNCTION()
-		void TurnStart();
+	void TurnStart();
 
 	// Function to use a selected move
 	UFUNCTION()
-		void UseMove(FMove Move, TArray<ACreatureBase*> Targets);
+	void UseMove(FMove Move, TArray<ACreatureBase*> Targets);
+
+	// Function to play the appropriate activation sound based on current health
+	UFUNCTION()
+	void PlayReadySound();
 
 	// Function to apply a status effect to this creature
 	UFUNCTION()
-		void AddEffect(EStatusEffect Effect, int Duration);
+	void AddEffect(EStatusEffect Effect, int Duration);
 
 	// Function to return the initiative roll for this creature
 	UFUNCTION()
-		int GetInitiativeRoll();
+	int GetInitiativeRoll();
 
 	// Function to return the stat sheet for this creature
 	UFUNCTION(BluePrintCallable)
-		FStatSheet GetStats();
+	FStatSheet GetStats();
 
 	// Function to return move list
 	UFUNCTION()
-		TArray<FMove> GetMoveList();
+	TArray<FMove> GetMoveList();
 
 	// Function to return current health value
 	UFUNCTION(BluePrintCallable)
-		int GetHealth();
+	int GetHealth();
 
-	// Function to set health to a given value
+	// Function to set health to a given amount
 	UFUNCTION()
-		void SetHealth(int Value);
+	void SetHealth(int Value);
+
+	// Variables
+
+	// Sound cue to play when damaged
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	USoundCue* DamagedSound;
+
+	// Sound cue to play when killed
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	USoundCue* DeathSound;
 
 };

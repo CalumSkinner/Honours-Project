@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/GameModeBase.h"
+#include "Kismet/GameplayStatics.h"
 #include "CreatureBase.h"
 #include "RPGGameMode.generated.h"
 
@@ -14,6 +15,7 @@ enum class EGameState : uint8 {
 	MoveSelect UMETA(DisplayName = "MoveSelect"),
 	TargetSelect UMETA(DisplayName = "TargetSelect"),
 	EnemyTurn UMETA(DisplayName = "EnemyTurn"),
+	BetweenTurns UMETA(DisplayName = "BetweenTurns"),
 
 };
 
@@ -28,6 +30,24 @@ public:
 
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
+
+	// Function to navigate the appropriate array using inputs
+	UFUNCTION(BlueprintCallable)
+	void Navigate(bool Positive);
+
+	// Function to select an item from the appropriate array
+	UFUNCTION(BlueprintCallable)
+	void Select();
+
+	// Function to play the activation sound of whatever menu item the player currently has selected
+	UFUNCTION(BlueprintCallable)
+	void Refresh();
+
+protected:
+
+	virtual void BeginPlay() override;
+
+	// Functions
 
 	// Function to initialise this combat, different levels will override this to add different creatures
 	UFUNCTION()
@@ -45,17 +65,27 @@ public:
 	UFUNCTION()
 	void AddCreature(UClass* CreatureToSpawn);
 
-	// Function to navigate the appropriate array using inputs
-	UFUNCTION(BlueprintCallable)
-	void Navigate(bool Positive);
+	// Function to generate a list of valid targets based on the selected move type and user
+	UFUNCTION()
+	TArray<ACreatureBase*> GenerateValidTargets(ACreatureBase* User, FMove Move);
 
-	// Function to select an item from the appropriate array
-	UFUNCTION(BlueprintCallable)
-	void Select();
+	// Function to check for and remove dead units
+	UFUNCTION()
+	void CleanupInitiative();
 
-protected:
+	// Function to have an enemy unit take a turn
+	UFUNCTION()
+	void TakeEnemyTurn();
 
-	virtual void BeginPlay() override;
+	// Function to swap game state
+	UFUNCTION()
+	void SwapState(EGameState NewState);
+
+	// Function to play a given sound, used for timer delegate
+	UFUNCTION()
+	void PlaySound(USoundCue* SoundCue);
+
+	// Variables
 
 	// Array storing creatures to be added to this combat, can be altered for each level
 	UPROPERTY(EditAnywhere, BluePrintReadWrite)
@@ -74,26 +104,31 @@ protected:
 	int InitiativeTracker = 0;
 
 	// Variable used for navigating move and target arrays
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	int Navigator = 0;
 
 	// Enum to track which game state we are currently in
-	UPROPERTY()
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	EGameState State;
 
 	// Move list of the currently active unit
-	UPROPERTY()
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	TArray<FMove> MoveList;
 
 	// Currently selected move
-	UPROPERTY()
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	FMove SelectedMove;
 
 	// List of valid targets for the selected move
-	UPROPERTY()
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	TArray<ACreatureBase*> ValidTargets;
 
 	// List of selected targets for the selected move
 	UPROPERTY()
 	TArray<ACreatureBase*> SelectedTargets;
+
+	// Sound cue used when selecting a menu option
+	UPROPERTY()
+	USoundCue* MenuClickSound;
 
 };

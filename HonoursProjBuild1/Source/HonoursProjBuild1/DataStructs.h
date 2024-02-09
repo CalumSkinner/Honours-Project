@@ -41,6 +41,16 @@ enum class ETeam : uint8 {
 
 };
 
+// Enum to determine move targeting types
+UENUM(BlueprintType)
+enum class ETargetProfile : uint8 {
+
+	HostileOnly UMETA(DisplayName = "HostileOnly"),
+	FriendlyOnly UMETA(DisplayName = "FriendlyOnly"),
+	AllUnits UMETA(DisplayName = "AllUnits"),
+
+};
+
 // Enum of different status effects that can be applied
 UENUM(BlueprintType)
 enum class EStatusEffect : uint8 {
@@ -88,43 +98,43 @@ struct FMove {
 public:
 
 	// Name of the move to be displayed
-	UPROPERTY(EditAnywhere, BluePrintReadWrite)
-		FString Name = "---";
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FString Name = "---";
 
 	// Short description of the move
-	UPROPERTY(EditAnywhere, BluePrintReadWrite)
-		FString Description = "---";
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FString Description = "---";
+
+	// Type of units this move can target
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	ETargetProfile CanTarget = ETargetProfile::HostileOnly;
 
 	// Number of targets the move can accept
-	UPROPERTY(EditAnywhere, BluePrintReadWrite)
-		int Targets = 1;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int Targets = 1;
 
 	// Modifier to hit
-	UPROPERTY(EditAnywhere, BluePrintReadWrite)
-		int HitMod = 3;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int HitMod = 3;
 
 	// Number of times random damage is rolled
-	UPROPERTY(EditAnywhere, BluePrintReadWrite)
-		int DamageRolls = 1;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int DamageRolls = 1;
 
 	// Damage the move deals (random)
-	UPROPERTY(EditAnywhere, BluePrintReadWrite)
-		int DamageDie = 4;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int DamageDie = 4;
 
 	// Additional damage modifier to be added after random damage is rolled
-	UPROPERTY(EditAnywhere, BluePrintReadWrite)
-		int DamageMod = 3;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int DamageMod = 3;
 
 	// Sound cue for when the move is selected
-	UPROPERTY(EditAnywhere, BluePrintReadWrite)
-		USoundCue* ReadySound = nullptr;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	USoundCue* ReadySound = nullptr;
 
-	// Sound cue for when the move hits
-	UPROPERTY(EditAnywhere, BluePrintReadWrite)
-		USoundCue* HitSound = nullptr;
-
-	// Sound cue for when the move misses
-	UPROPERTY(EditAnywhere, BluePrintReadWrite)
-		USoundCue* MissSound = nullptr;
+	// Sound cue for when the move is used
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	USoundCue* UseSound = nullptr;
 
 };
