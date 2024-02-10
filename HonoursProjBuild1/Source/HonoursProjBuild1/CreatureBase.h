@@ -83,9 +83,9 @@ public:
 	UFUNCTION()
 	void TurnStart();
 
-	// Function to use a selected move
+	// Function to use a selected move, returns a float value of approximate time taken in seconds
 	UFUNCTION()
-	void UseMove(FMove Move, TArray<ACreatureBase*> Targets);
+	float UseMove(FMove Move, TArray<ACreatureBase*> Targets);
 
 	// Function to play the appropriate activation sound based on current health
 	UFUNCTION()

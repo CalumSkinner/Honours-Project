@@ -9,15 +9,6 @@ ACreatureBase::ACreatureBase()
  	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
-	// Populate move list with empty moves
-	FMove defaultMove;
-
-	for (int i = 0; i < 4; i++) {
-
-		MoveList.Add(defaultMove);
-
-	}
-
 	// Load sound cue for when a move misses
 	auto MissAsset = ConstructorHelpers::FObjectFinder<USoundCue>(TEXT("SoundCue'/Game/Audio/Misc/SFX_Miss.SFX_Miss'"));
 
@@ -51,6 +42,9 @@ void ACreatureBase::Tick(float DeltaTime)
 
 // Function to update creature at the start of a new turn
 void ACreatureBase::TurnStart() {
+
+	// Play ready sound
+	PlayReadySound();
 
 	// Update status effects
 	UpdateEffects();
@@ -108,17 +102,20 @@ void ACreatureBase::PlaySoundWithDelay(USoundCue* SoundCue, float Delay) {
 
 }
 
-// Function to use a selected move
-void ACreatureBase::UseMove(FMove Move, TArray<ACreatureBase*> Targets) {
+// Function to use a selected move, returns a float value of approximate time taken in seconds
+float ACreatureBase::UseMove(FMove Move, TArray<ACreatureBase*> Targets) {
+
+	// Variable used to iterate through target list
+	int iterator;
 
 	// Iterate through list of selected targets
-	for (int i = 0; i < Targets.Num(); i++) {
+	for (iterator = 0; iterator < Targets.Num(); iterator++) {
 
 		// Announce move with user and target
-		GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, BaseStats.Name + " uses " + Move.Name + " on " + Targets[i]->GetStats().Name);
+		GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, BaseStats.Name + " uses " + Move.Name + " on " + Targets[iterator]->GetStats().Name);
 
 		// Play sound to indicate move has been used
-		PlaySoundWithDelay(Move.UseSound, i + 0.1f);
+		PlaySoundWithDelay(Move.UseSound, iterator + 0.5f);
 
 		// Roll to hit (1d20) using hit modifier of the move
 		int attackRoll = FDice::Roll(1, 20) + Move.HitMod;
@@ -130,7 +127,10 @@ void ACreatureBase::UseMove(FMove Move, TArray<ACreatureBase*> Targets) {
 		}
 
 		// Move has hit
-		if (attackRoll >= Targets[i]->GetStats().ArmourClass) {
+		if (attackRoll >= Targets[iterator]->GetStats().ArmourClass) {
+
+			// Play sound to indicate move has hit
+			PlaySoundWithDelay(Move.HitSound, iterator + 1.0f);
 
 			if (GEngine) {
 
@@ -142,17 +142,17 @@ void ACreatureBase::UseMove(FMove Move, TArray<ACreatureBase*> Targets) {
 			int damage = FDice::Roll(Move.DamageRolls, Move.DamageDie) + Move.DamageMod;
 
 			// Damage target by total damage amount
-			Targets[i]->SetHealth(Targets[i]->GetHealth() - damage);
+			Targets[iterator]->SetHealth(Targets[iterator]->GetHealth() - damage);
 
 			// Call appropriate sound effect from target
-			if (Targets[i]->GetHealth() > 0) {
+			if (Targets[iterator]->GetHealth() > 0) {
 
-				Targets[i]->PlaySoundWithDelay(Targets[i]->DamagedSound, i + 0.5f);
+				Targets[iterator]->PlaySoundWithDelay(Targets[iterator]->DamagedSound, iterator + 1.5f);
 
 			}
 			else {
 
-				Targets[i]->PlaySoundWithDelay(Targets[i]->DeathSound, i + 0.5f);
+				Targets[iterator]->PlaySoundWithDelay(Targets[iterator]->DeathSound, iterator + 1.5f);
 
 			}
 
@@ -162,7 +162,7 @@ void ACreatureBase::UseMove(FMove Move, TArray<ACreatureBase*> Targets) {
 		{
 
 			// Play sound to indicate miss
-			PlaySoundWithDelay(MissSound, i + 0.5f);
+			PlaySoundWithDelay(MissSound, iterator + 1.0f);
 
 			if (GEngine) {
 
@@ -173,6 +173,9 @@ void ACreatureBase::UseMove(FMove Move, TArray<ACreatureBase*> Targets) {
 		}
 
 	}
+
+	// Return iterator to determine how long audio effects have taken
+	return iterator + 2.0f;
 
 }
 

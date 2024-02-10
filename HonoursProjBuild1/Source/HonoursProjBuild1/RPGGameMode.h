@@ -57,9 +57,9 @@ protected:
 	UFUNCTION()
 	void TurnStart();
 
-	// Function to progress to the next turn
+	// Function to progress to the next turn after a given delay in seconds
 	UFUNCTION()
-	void NextTurn();
+	void NextTurn(float Delay);
 
 	// Function to add a new creature to the correct space on the initiative tracker
 	UFUNCTION()

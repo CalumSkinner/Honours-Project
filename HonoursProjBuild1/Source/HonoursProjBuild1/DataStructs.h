@@ -137,4 +137,8 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	USoundCue* UseSound = nullptr;
 
+	// Sound cue for when the move hits a target
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	USoundCue* HitSound = nullptr;
+
 };

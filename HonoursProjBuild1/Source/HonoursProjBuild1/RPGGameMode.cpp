@@ -77,15 +77,20 @@ void ARPGGameMode::TurnStart() {
 		// Set game state
 		SwapState(EGameState::EnemyTurn);
 
-		// Have enemy unit use a move
-		TakeEnemyTurn();
+		// Variables for timer
+		FTimerHandle timerHandle;
+		FTimerDelegate timerDelegate;
+
+		// Have enemy unit take their turn after a delay
+		timerDelegate = FTimerDelegate::CreateUObject(this, &ARPGGameMode::TakeEnemyTurn);
+		GetWorldTimerManager().SetTimer(timerHandle, timerDelegate, 1.0f, false);
 
 	}
 
 }
 
-// Function to progress to the next turn
-void ARPGGameMode::NextTurn() {
+// Function to progress to the next turn after a given delay in seconds
+void ARPGGameMode::NextTurn(float Delay) {
 
 	// Update game state
 	SwapState(EGameState::BetweenTurns);
@@ -112,9 +117,9 @@ void ARPGGameMode::NextTurn() {
 	FTimerHandle timerHandle;
 	FTimerDelegate timerDelegate;
 
-	// Start next turn after a delay
+	// Start next turn after the delay specified
 	timerDelegate = FTimerDelegate::CreateUObject(this, &ARPGGameMode::TurnStart);
-	GetWorldTimerManager().SetTimer(timerHandle, timerDelegate, 1.0f, false);
+	GetWorldTimerManager().SetTimer(timerHandle, timerDelegate, Delay, false);
 
 }
 
@@ -255,13 +260,8 @@ void ARPGGameMode::TakeEnemyTurn() {
 	FTimerHandle timerHandle;
 	FTimerDelegate timerDelegate;
 
-	// Play ready sound after a delay
-	if (SelectedMove.ReadySound) {
-
-		timerDelegate = FTimerDelegate::CreateUObject(this, &ARPGGameMode::PlaySound, SelectedMove.ReadySound);
-		GetWorldTimerManager().SetTimer(timerHandle, timerDelegate, 0.5f, false);
-
-	}
+	// Play ready sound
+	PlaySound(SelectedMove.ReadySound);
 
 	// Generate valid target list
 	ValidTargets = GenerateValidTargets(CurrentUnit, SelectedMove);
@@ -285,11 +285,11 @@ void ARPGGameMode::TakeEnemyTurn() {
 
 	}
 
-	// Use move with selected targets
-	CurrentUnit->UseMove(SelectedMove, SelectedTargets);
+	// Use move with selected targets and store time taken
+	float timeTaken = CurrentUnit->UseMove(SelectedMove, SelectedTargets);
 
 	// Progress to next turn
-	NextTurn();
+	NextTurn(timeTaken);
 
 }
 
@@ -303,7 +303,13 @@ void ARPGGameMode::SwapState(EGameState NewState) {
 // Function to play a given sound, used for timer delegate
 void ARPGGameMode::PlaySound(USoundCue* SoundCue) {
 
-	UGameplayStatics::PlaySound2D(GetWorld(), SoundCue);
+	// Check if SoundCue is valid
+	if (SoundCue) {
+
+		// Play sound
+		UGameplayStatics::PlaySound2D(GetWorld(), SoundCue);
+
+	}
 
 }
 
@@ -346,11 +352,7 @@ void ARPGGameMode::Navigate(bool Positive) {
 		}
 
 		// Play ready sound for move we have just navigated to
-		if (MoveList[Navigator].ReadySound) {
-
-			UGameplayStatics::PlaySound2D(GetWorld(), MoveList[Navigator].ReadySound);
-
-		}
+		PlaySound(MoveList[Navigator].ReadySound);
 
 		break;
 
@@ -415,7 +417,7 @@ void ARPGGameMode::Select() {
 		SwapState(EGameState::TargetSelect);
 
 		// Play sound to indicate menu object has been selected
-		UGameplayStatics::PlaySound2D(GetWorld(), MenuClickSound);
+		PlaySound(MenuClickSound);
 
 		GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, FString::Printf(TEXT("Move Selected")));
 
@@ -436,18 +438,18 @@ void ARPGGameMode::Select() {
 		}
 
 		// Play sound to indicate menu object has been selected
-		UGameplayStatics::PlaySound2D(GetWorld(), MenuClickSound);
+		PlaySound(MenuClickSound);
 
 		GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, FString::Printf(TEXT("Target Selected")));
 
 		// Check if max number of targets has been selected or if there are no more valid targets to select
 		if (SelectedTargets.Num() == SelectedMove.Targets || ValidTargets.IsEmpty()) {
 
-			// Use selected move on all selected targets
-			CurrentUnit->UseMove(SelectedMove, SelectedTargets);
+			// Use selected move on all selected targets and store time taken
+			float timeTaken = CurrentUnit->UseMove(SelectedMove, SelectedTargets);
 
 			// Progress to next turn
-			NextTurn();
+			NextTurn(timeTaken);
 
 			// Reset navigator
 			Navigator = 0;
@@ -480,11 +482,7 @@ void ARPGGameMode::Refresh() {
 	case (EGameState::MoveSelect):
 
 		// Play ready sound for move
-		if (MoveList[Navigator].ReadySound) {
-
-			UGameplayStatics::PlaySound2D(GetWorld(), MoveList[Navigator].ReadySound);
-
-		}
+		PlaySound(MoveList[Navigator].ReadySound);
 
 		break;
 
