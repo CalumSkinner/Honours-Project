@@ -39,9 +39,13 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void Select();
 
-	// Function to play the activation sound of whatever menu item the player currently has selected
+	// Function to play the ready sound of whatever menu item the player currently has selected
 	UFUNCTION(BlueprintCallable)
 	void Refresh();
+
+	// Function to play the ready sound of all units currently alive in order of initiative
+	UFUNCTION(BlueprintCallable)
+	void InitiativeCheck();
 
 protected:
 
@@ -60,6 +64,10 @@ protected:
 	// Function to progress to the next turn after a given delay in seconds
 	UFUNCTION()
 	void NextTurn(float Delay);
+
+	// Function to check whether the player has won or lost
+	UFUNCTION()
+	void VictoryCheck();
 
 	// Function to add a new creature to the correct space on the initiative tracker
 	UFUNCTION()
@@ -84,6 +92,10 @@ protected:
 	// Function to play a given sound, used for timer delegate
 	UFUNCTION()
 	void PlaySound(USoundCue* SoundCue);
+
+	// Function to get a given unit to play ready sound, used for timer delegate
+	UFUNCTION()
+	void PlayReadySound(ACreatureBase* Target);
 
 	// Variables
 

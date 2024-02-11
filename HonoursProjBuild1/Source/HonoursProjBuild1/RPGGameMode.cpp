@@ -103,6 +103,9 @@ void ARPGGameMode::NextTurn(float Delay) {
 	// Run cleanup on initiative order
 	CleanupInitiative();
 
+	// Check for a win
+	VictoryCheck();
+
 	// Increment initiative tracker
 	InitiativeTracker += 1;
 
@@ -120,6 +123,29 @@ void ARPGGameMode::NextTurn(float Delay) {
 	// Start next turn after the delay specified
 	timerDelegate = FTimerDelegate::CreateUObject(this, &ARPGGameMode::TurnStart);
 	GetWorldTimerManager().SetTimer(timerHandle, timerDelegate, Delay, false);
+
+}
+
+// Function to check whether the player has won or lost
+void ARPGGameMode::VictoryCheck() {
+
+	// Initially set winning team to the side of the first unit in initiative order
+	ETeam winners = InitiativeOrder[0]->GetStats().Team;
+
+	// Iterate through all currently alive units
+	for (int i = 0; i < InitiativeOrder.Num(); i++) {
+
+		// If team is different from initial team, neither side has won
+		if (InitiativeOrder[i]->GetStats().Team != winners) {
+
+			return;
+
+		}
+
+	}
+
+	// If loop is completed and all units are the same team, game is over
+	UKismetSystemLibrary::QuitGame(GetWorld(), UGameplayStatics::GetPlayerController(GetWorld(), 0), EQuitPreference::Quit, true);
 
 }
 
@@ -256,10 +282,6 @@ void ARPGGameMode::TakeEnemyTurn() {
 	// Select move to use at random
 	SelectedMove = MoveList[FMath::RandRange(0, MoveList.Num() - 1)];
 
-	// Variables for timer
-	FTimerHandle timerHandle;
-	FTimerDelegate timerDelegate;
-
 	// Play ready sound
 	PlaySound(SelectedMove.ReadySound);
 
@@ -310,6 +332,13 @@ void ARPGGameMode::PlaySound(USoundCue* SoundCue) {
 		UGameplayStatics::PlaySound2D(GetWorld(), SoundCue);
 
 	}
+
+}
+
+// Function to get a given unit to play ready sound, used for timer delegate
+void ARPGGameMode::PlayReadySound(ACreatureBase* Target) {
+
+	Target->PlayReadySound();
 
 }
 
@@ -472,7 +501,7 @@ void ARPGGameMode::Select() {
 
 }
 
-// Function to play the activation sound of whatever menu item the player currently has selected
+// Function to play the ready sound of whatever menu item the player currently has selected
 void ARPGGameMode::Refresh() {
 
 	// Switch statement to determine what state we are in
@@ -503,6 +532,24 @@ void ARPGGameMode::Refresh() {
 	case (EGameState::BetweenTurns):
 
 		break;
+
+	}
+
+}
+
+// Function to play the ready sound of all units currently alive in order of initiative
+void ARPGGameMode::InitiativeCheck() {
+
+	// Iterate through initiative order
+	for (int i = 0; i < InitiativeOrder.Num(); i++) {
+
+		// Variables for timer
+		FTimerHandle timerHandle;
+		FTimerDelegate timerDelegate;
+
+		// Play ready sound of each unit with delay in between
+		timerDelegate = FTimerDelegate::CreateUObject(this, &ARPGGameMode::PlayReadySound, InitiativeOrder[i]);
+		GetWorldTimerManager().SetTimer(timerHandle, timerDelegate, i + 0.1f, false);
 
 	}
 
