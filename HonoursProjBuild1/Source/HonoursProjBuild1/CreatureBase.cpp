@@ -18,6 +18,15 @@ ACreatureBase::ACreatureBase()
 
 	}
 
+	// Load sound cue for when low on HP
+	auto LowHPAsset = ConstructorHelpers::FObjectFinder<USoundCue>(TEXT("SoundCue'/Game/Audio/Misc/SFX_Heartbeat.SFX_Heartbeat'"));
+
+	if (LowHPAsset.Succeeded()) {
+
+		LowHPSound = LowHPAsset.Object;
+
+	}
+
 }
 
 // Called when the game starts or when spawned
@@ -182,27 +191,15 @@ float ACreatureBase::UseMove(FMove Move, TArray<ACreatureBase*> Targets) {
 // Function to play the appropriate activation sound based on current health
 void ACreatureBase::PlayReadySound() {
 
-	// Check if high HP (>66%)
-	if (GetHealth() >= GetStats().HealthMax * 0.66) {
+	// Convert percentage HP into value to be used as volume for heartbeat SFX, scaling with HP lost
+	float percentHP = (float(GetHealth()) / float(GetStats().HealthMax));
+	float volume = (1.0f - percentHP) * 0.75f;
 
-		// Play correct sound cue
-		PlaySound(ReadySoundHigh);
+	// Play heartbeat sound with scaling volume based on HP
+	UGameplayStatics::PlaySound2D(GetWorld(), LowHPSound, volume);
 
-	}
-	// Check if medium HP (>33%)
-	else if (GetHealth() >= GetStats().HealthMax * 0.33) {
-
-		// Play correct sound cue
-		PlaySound(ReadySoundMedium);
-
-	}
-	// Low HP
-	else {
-
-		// Play correct sound cue
-		PlaySound(ReadySoundLow);
-
-	}
+	// Play ready sound
+	PlaySoundWithDelay(ReadySound, 0.01f);
 
 }
 

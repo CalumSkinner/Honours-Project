@@ -57,17 +57,13 @@ protected:
 	UPROPERTY()
 	TMap<EStatusEffect, int> CurrentEffects;
 
-	// Sound cue to play when activated (High HP)
+	// Sound cue to play when activated
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	USoundCue* ReadySoundHigh;
+	USoundCue* ReadySound;
 
-	// Sound cue to play when activated (Medium HP)
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	USoundCue* ReadySoundMedium;
-
-	// Sound cue to play when activated (Low HP)
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	USoundCue* ReadySoundLow;
+	// Sound cue for when low on HP
+	UPROPERTY()
+	USoundCue* LowHPSound;
 
 	// Sound cue for when a move misses
 	UPROPERTY()

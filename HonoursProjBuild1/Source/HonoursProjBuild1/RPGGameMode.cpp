@@ -145,7 +145,7 @@ void ARPGGameMode::VictoryCheck() {
 	}
 
 	// If loop is completed and all units are the same team, game is over
-	UKismetSystemLibrary::QuitGame(GetWorld(), UGameplayStatics::GetPlayerController(GetWorld(), 0), EQuitPreference::Quit, true);
+	GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, FString::Printf(TEXT("COMBAT FINISHED")));
 
 }
 
@@ -549,7 +549,7 @@ void ARPGGameMode::InitiativeCheck() {
 
 		// Play ready sound of each unit with delay in between
 		timerDelegate = FTimerDelegate::CreateUObject(this, &ARPGGameMode::PlayReadySound, InitiativeOrder[i]);
-		GetWorldTimerManager().SetTimer(timerHandle, timerDelegate, i + 0.1f, false);
+		GetWorldTimerManager().SetTimer(timerHandle, timerDelegate, (i * 1.25f) + 0.1f, false);
 
 	}
 
