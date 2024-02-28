@@ -97,6 +97,10 @@ protected:
 	UFUNCTION()
 	void PlayReadySound(ACreatureBase* Target);
 
+	// Function to check whether the selected move has the potential to kill the selected target and play the appropriate sound
+	UFUNCTION()
+	void LethalCheck(FMove move, ACreatureBase* target);
+
 	// Variables
 
 	// Array storing creatures to be added to this combat, can be altered for each level
@@ -142,5 +146,13 @@ protected:
 	// Sound cue used when selecting a menu option
 	UPROPERTY()
 	USoundCue* MenuClickSound;
+
+	// Sound cue used to indicate that a selected move will kill selected target with average damage
+	UPROPERTY()
+	USoundCue* AvgLethalSound;
+
+	// Sound cue used to indicate that a selected move will kill selected target with minimum damage
+	UPROPERTY()
+	USoundCue* MinLethalSound;
 
 };

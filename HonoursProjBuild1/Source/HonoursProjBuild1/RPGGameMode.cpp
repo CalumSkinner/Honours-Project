@@ -16,6 +16,24 @@ ARPGGameMode::ARPGGameMode() {
 
 	}
 
+	// Load sound cue for potential lethal
+	auto AvgLethalAsset = ConstructorHelpers::FObjectFinder<USoundCue>(TEXT("SoundCue'/Game/Audio/Misc/SFX_LethalPotential.SFX_LethalPotential'"));
+
+	if (AvgLethalAsset.Succeeded()) {
+
+		AvgLethalSound = AvgLethalAsset.Object;
+
+	}
+
+	// Load sound cue for guaranteed lethal
+	auto MinLethalAsset = ConstructorHelpers::FObjectFinder<USoundCue>(TEXT("SoundCue'/Game/Audio/Misc/SFX_LethalGuaranteed.SFX_LethalGuaranteed'"));
+
+	if (MinLethalAsset.Succeeded()) {
+
+		MinLethalSound = MinLethalAsset.Object;
+
+	}
+
 }
 
 void ARPGGameMode::BeginPlay()
@@ -342,6 +360,43 @@ void ARPGGameMode::PlayReadySound(ACreatureBase* Target) {
 
 }
 
+// Function to check whether the selected move has the potential to kill the selected target and play the appropriate sound
+void ARPGGameMode::LethalCheck(FMove Move, ACreatureBase* Target) {
+
+	// Healing moves cannot kill so exit here
+	if (Move.HitMethod == EHitMethod::Healing) {
+
+		return;
+
+	}
+
+	// Calculate average and minimum damage for the given move
+	int averageDamage = (Move.DamageRolls * (Move.DamageDie / 2)) + Move.DamageMod;
+	int minimumDamage = Move.DamageRolls + Move.DamageMod;
+
+	// Variables for timer
+	FTimerHandle timerHandle;
+	FTimerDelegate timerDelegate;
+
+	// Check whether a minimum damage roll will kill
+	if (minimumDamage >= Target->GetHealth()) {
+
+		// Play appropriate sound
+		timerDelegate = FTimerDelegate::CreateUObject(this, &ARPGGameMode::PlaySound, MinLethalSound);
+		GetWorldTimerManager().SetTimer(timerHandle, timerDelegate, 0.01f, false);
+
+	}
+	// Check whether an average damage roll will kill
+	else if (averageDamage >= Target->GetHealth()) {
+
+		// Play appropriate sound
+		timerDelegate = FTimerDelegate::CreateUObject(this, &ARPGGameMode::PlaySound, AvgLethalSound);
+		GetWorldTimerManager().SetTimer(timerHandle, timerDelegate, 0.01f, false);
+
+	}
+
+}
+
 // Function to navigate the appropriate array using inputs
 void ARPGGameMode::Navigate(bool Positive) {
 
@@ -404,6 +459,9 @@ void ARPGGameMode::Navigate(bool Positive) {
 
 		// Play ready sound for unit we have just navigated to
 		ValidTargets[Navigator]->PlayReadySound();
+
+		// Perform lethal check using selected move and target
+		LethalCheck(SelectedMove, ValidTargets[Navigator]);
 
 		break;
 
@@ -520,6 +578,9 @@ void ARPGGameMode::Refresh() {
 
 		// Play ready sound for creature
 		ValidTargets[Navigator]->PlayReadySound();
+
+		// Perform lethal check using selected move and target
+		LethalCheck(SelectedMove, ValidTargets[Navigator]);
 
 		break;
 

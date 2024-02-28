@@ -69,6 +69,10 @@ protected:
 	UPROPERTY()
 	USoundCue* MissSound;
 
+	// Sound cue for when healed
+	UPROPERTY()
+	USoundCue* HealedSound;
+
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;

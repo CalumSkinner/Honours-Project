@@ -27,6 +27,15 @@ ACreatureBase::ACreatureBase()
 
 	}
 
+	// Load sound cue for when healed
+	auto HealedAsset = ConstructorHelpers::FObjectFinder<USoundCue>(TEXT("SoundCue'/Game/Audio/Misc/SFX_Healed.SFX_Healed'"));
+
+	if (HealedAsset.Succeeded()) {
+
+		HealedSound = HealedAsset.Object;
+
+	}
+
 }
 
 // Called when the game starts or when spawned
@@ -126,32 +135,80 @@ float ACreatureBase::UseMove(FMove Move, TArray<ACreatureBase*> Targets) {
 		// Play sound to indicate move has been used
 		PlaySoundWithDelay(Move.UseSound, iterator + 0.5f);
 
-		// Roll to hit (1d20) using hit modifier of the move
-		int attackRoll = FDice::Roll(1, 20) + Move.HitMod;
+		// Roll damage amount based on damage values of the move
+		int damage = FDice::Roll(Move.DamageRolls, Move.DamageDie) + Move.DamageMod;
 
-		if (GEngine) {
+		// Variable to store attack roll for moves that require it
+		int attackRoll;
 
-			GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, FString::Printf(TEXT("Rolled %i total to hit"), attackRoll));
+		// Switch statement based on the hit method of the move
+		switch (Move.HitMethod) {
 
-		}
+		// Move requires an attack roll to check against target AC
+		case (EHitMethod::AttackRoll):
 
-		// Move has hit
-		if (attackRoll >= Targets[iterator]->GetStats().ArmourClass) {
-
-			// Play sound to indicate move has hit
-			PlaySoundWithDelay(Move.HitSound, iterator + 1.0f);
+			// Roll to hit (1d20) using hit modifier of the move
+			attackRoll = FDice::Roll(1, 20) + Move.HitMod;
 
 			if (GEngine) {
 
-				GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, TEXT("Hit"));
+				GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, FString::Printf(TEXT("Rolled %i total to hit"), attackRoll));
 
 			}
 
-			// Roll damage amount based on damage values of the move
-			int damage = FDice::Roll(Move.DamageRolls, Move.DamageDie) + Move.DamageMod;
+			// Move has hit
+			if (attackRoll >= Targets[iterator]->GetStats().ArmourClass) {
+
+				// Play sound to indicate move has hit
+				PlaySoundWithDelay(Move.HitSound, iterator + 1.0f);
+
+				// Damage target by total damage amount
+				Targets[iterator]->SetHealth(Targets[iterator]->GetHealth() - damage);
+
+				// Call appropriate sound effect from target
+				if (Targets[iterator]->GetHealth() > 0) {
+
+					Targets[iterator]->PlaySoundWithDelay(Targets[iterator]->DamagedSound, iterator + 1.5f);
+
+				}
+				else {
+
+					Targets[iterator]->PlaySoundWithDelay(Targets[iterator]->DeathSound, iterator + 1.5f);
+
+				}
+
+				if (GEngine) {
+
+					GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, TEXT("Hit"));
+
+				}
+
+			}
+			// Move has missed
+			else
+			{
+
+				// Play sound to indicate miss
+				PlaySoundWithDelay(MissSound, iterator + 1.0f);
+
+				if (GEngine) {
+
+					GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, TEXT("Miss"));
+
+				}
+
+			}
+
+			break;
+
+		// Move automatically hits selected target
+		case (EHitMethod::AutoHit):
 
 			// Damage target by total damage amount
 			Targets[iterator]->SetHealth(Targets[iterator]->GetHealth() - damage);
+
+			// Play sound to indicate move has hit
+			PlaySoundWithDelay(Move.HitSound, iterator + 1.0f);
 
 			// Call appropriate sound effect from target
 			if (Targets[iterator]->GetHealth() > 0) {
@@ -165,19 +222,25 @@ float ACreatureBase::UseMove(FMove Move, TArray<ACreatureBase*> Targets) {
 
 			}
 
-		}
-		// Move has missed
-		else
-		{
+			break;
 
-			// Play sound to indicate miss
-			PlaySoundWithDelay(MissSound, iterator + 1.0f);
+		// Move heals selected target, does not require attack roll
+		case (EHitMethod::Healing):
 
-			if (GEngine) {
+			// Heal target by total damage amount
+			Targets[iterator]->SetHealth(Targets[iterator]->GetHealth() + damage);
 
-				GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, TEXT("Miss"));
+			// Clamp health to target max health value
+			if (Targets[iterator]->GetHealth() > Targets[iterator]->GetStats().HealthMax) {
+
+				Targets[iterator]->SetHealth(Targets[iterator]->GetStats().HealthMax);
 
 			}
+
+			// Play sound to indicate healing
+			PlaySoundWithDelay(HealedSound, iterator + 1.0f);
+
+			break;
 
 		}
 
@@ -191,12 +254,17 @@ float ACreatureBase::UseMove(FMove Move, TArray<ACreatureBase*> Targets) {
 // Function to play the appropriate activation sound based on current health
 void ACreatureBase::PlayReadySound() {
 
-	// Convert percentage HP into value to be used as volume for heartbeat SFX, scaling with HP lost
-	float percentHP = (float(GetHealth()) / float(GetStats().HealthMax));
-	float volume = (1.0f - percentHP) * 0.75f;
+	// Only play heartbeat SFX for friendly units
+	if (GetStats().Team == ETeam::Friendly) {
 
-	// Play heartbeat sound with scaling volume based on HP
-	UGameplayStatics::PlaySound2D(GetWorld(), LowHPSound, volume);
+		// Convert percentage HP into value to be used as volume for heartbeat SFX, scaling with HP lost
+		float percentHP = (float(GetHealth()) / float(GetStats().HealthMax));
+		float volume = (1.0f - percentHP) * 0.75f;
+
+		// Play heartbeat sound with scaling volume based on HP
+		UGameplayStatics::PlaySound2D(GetWorld(), LowHPSound, volume);
+
+	}
 
 	// Play ready sound
 	PlaySoundWithDelay(ReadySound, 0.01f);

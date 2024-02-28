@@ -51,6 +51,16 @@ enum class ETargetProfile : uint8 {
 
 };
 
+// Enum to determine hit method for this move
+UENUM(BlueprintType)
+enum class EHitMethod : uint8 {
+
+	AttackRoll UMETA(DisplayName = "AttackRoll"),
+	Healing UMETA(DisplayName = "Healing"),
+	AutoHit UMETA(DisplayName = "AutoHit"),
+
+};
+
 // Enum of different status effects that can be applied
 UENUM(BlueprintType)
 enum class EStatusEffect : uint8 {
@@ -108,6 +118,10 @@ public:
 	// Type of units this move can target
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	ETargetProfile CanTarget = ETargetProfile::HostileOnly;
+
+	// How this move deals damage/heals
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	EHitMethod HitMethod = EHitMethod::AttackRoll;
 
 	// Number of targets the move can accept
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
