@@ -16,6 +16,25 @@ enum class EGameState : uint8 {
 	TargetSelect UMETA(DisplayName = "TargetSelect"),
 	EnemyTurn UMETA(DisplayName = "EnemyTurn"),
 	BetweenTurns UMETA(DisplayName = "BetweenTurns"),
+	Glossary UMETA(DisplayName = "Glossary")
+
+};
+
+// Custom struct for audio glossary entries
+USTRUCT(BlueprintType)
+struct FGlossaryEntry {
+
+	GENERATED_BODY()
+
+public:
+
+	// Sound cue
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	USoundCue* Sound;
+
+	// Description
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FString Description;
 
 };
 
@@ -45,7 +64,11 @@ public:
 
 	// Function to play the ready sound of all units currently alive in order of initiative
 	UFUNCTION(BlueprintCallable)
-	void InitiativeCheck();
+	float InitiativeCheck();
+
+	// Function to open/close the audio glossary
+	UFUNCTION(BlueprintCallable)
+	void CheckGlossary();
 
 protected:
 
@@ -65,9 +88,17 @@ protected:
 	UFUNCTION()
 	void NextTurn(float Delay);
 
-	// Function to check whether the player has won or lost
+	// Function to check whether the player has won or lost, returns true if combat is over
 	UFUNCTION()
-	void VictoryCheck();
+	bool VictoryCheck();
+
+	// Function for when player wins combat
+	UFUNCTION()
+	void CombatWon();
+
+	// Function for when player loses combat
+	UFUNCTION()
+	void CombatLost();
 
 	// Function to add a new creature to the correct space on the initiative tracker
 	UFUNCTION()
@@ -103,6 +134,14 @@ protected:
 
 	// Variables
 
+	// Name of the next level to be loaded
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FName NextLevel;
+
+	// Audio glossary, created using nested maps holding sound cues and their descriptions
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TArray<FGlossaryEntry> AudioGlossary;
+
 	// Array storing creatures to be added to this combat, can be altered for each level
 	UPROPERTY(EditAnywhere, BluePrintReadWrite)
 	TArray<UClass*> CreaturesToSpawn;
@@ -126,6 +165,10 @@ protected:
 	// Enum to track which game state we are currently in
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	EGameState State;
+
+	// Variable to hold state that audio glossary was accessed from in order to return to it
+	UPROPERTY()
+	EGameState PreviousState;
 
 	// Move list of the currently active unit
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)

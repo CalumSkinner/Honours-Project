@@ -126,14 +126,14 @@ float ACreatureBase::UseMove(FMove Move, TArray<ACreatureBase*> Targets) {
 	// Variable used to iterate through target list
 	int iterator;
 
+	// Play sound to indicate move has been used
+	PlaySoundWithDelay(Move.UseSound, 0.5f);
+
 	// Iterate through list of selected targets
 	for (iterator = 0; iterator < Targets.Num(); iterator++) {
 
 		// Announce move with user and target
 		GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, BaseStats.Name + " uses " + Move.Name + " on " + Targets[iterator]->GetStats().Name);
-
-		// Play sound to indicate move has been used
-		PlaySoundWithDelay(Move.UseSound, iterator + 0.5f);
 
 		// Roll damage amount based on damage values of the move
 		int damage = FDice::Roll(Move.DamageRolls, Move.DamageDie) + Move.DamageMod;

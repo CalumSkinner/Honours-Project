@@ -59,6 +59,9 @@ void ARPGGameMode::Tick(float DeltaTime)
 // Function to initialise this combat, adding units to initiative tracker and setting up first turn
 void ARPGGameMode::InitCombat() {
 
+	// Initialise game state
+	SwapState(EGameState::BetweenTurns);
+
 	// Iterate through creatures to spawn and add each to the initiative tracker
 	for (int i = 0; i < CreaturesToSpawn.Num(); i++) {
 
@@ -66,8 +69,16 @@ void ARPGGameMode::InitCombat() {
 
 	}
 
-	// Start first turn
-	TurnStart();
+	// Play unit sounds in initiative order
+	float delay = InitiativeCheck();
+
+	// Variables for timer
+	FTimerHandle timerHandle;
+	FTimerDelegate timerDelegate;
+
+	// Start first turn after a delay
+	timerDelegate = FTimerDelegate::CreateUObject(this, &ARPGGameMode::TurnStart);
+	GetWorldTimerManager().SetTimer(timerHandle, timerDelegate, delay, false);
 
 }
 
@@ -122,30 +133,32 @@ void ARPGGameMode::NextTurn(float Delay) {
 	CleanupInitiative();
 
 	// Check for a win
-	VictoryCheck();
+	if (!VictoryCheck()) {
 
-	// Increment initiative tracker
-	InitiativeTracker += 1;
+		// Increment initiative tracker
+		InitiativeTracker += 1;
 
-	// Clamp value based on array size
-	if (InitiativeTracker > InitiativeOrder.Num() - 1) {
+		// Clamp value based on array size
+		if (InitiativeTracker > InitiativeOrder.Num() - 1) {
 
-		InitiativeTracker = 0;
+			InitiativeTracker = 0;
+
+		}
+
+		// Variables for timer
+		FTimerHandle timerHandle;
+		FTimerDelegate timerDelegate;
+
+		// Start next turn after the delay specified
+		timerDelegate = FTimerDelegate::CreateUObject(this, &ARPGGameMode::TurnStart);
+		GetWorldTimerManager().SetTimer(timerHandle, timerDelegate, Delay, false);
 
 	}
-
-	// Variables for timer
-	FTimerHandle timerHandle;
-	FTimerDelegate timerDelegate;
-
-	// Start next turn after the delay specified
-	timerDelegate = FTimerDelegate::CreateUObject(this, &ARPGGameMode::TurnStart);
-	GetWorldTimerManager().SetTimer(timerHandle, timerDelegate, Delay, false);
 
 }
 
 // Function to check whether the player has won or lost
-void ARPGGameMode::VictoryCheck() {
+bool ARPGGameMode::VictoryCheck() {
 
 	// Initially set winning team to the side of the first unit in initiative order
 	ETeam winners = InitiativeOrder[0]->GetStats().Team;
@@ -156,14 +169,54 @@ void ARPGGameMode::VictoryCheck() {
 		// If team is different from initial team, neither side has won
 		if (InitiativeOrder[i]->GetStats().Team != winners) {
 
-			return;
+			return false;
 
 		}
 
 	}
 
+	// Variables for timer
+	FTimerHandle timerHandle;
+	FTimerDelegate timerDelegate;
+
+	// Check which side has won
+	if (winners == ETeam::Friendly) {
+
+		// Open next level after a delay
+		timerDelegate = FTimerDelegate::CreateUObject(this, &ARPGGameMode::CombatWon);
+		GetWorldTimerManager().SetTimer(timerHandle, timerDelegate, 3.0f, false);
+
+	}
+	else if (winners == ETeam::Enemy) {
+
+		// Restart current level after a delay
+		timerDelegate = FTimerDelegate::CreateUObject(this, &ARPGGameMode::CombatLost);
+		GetWorldTimerManager().SetTimer(timerHandle, timerDelegate, 3.0f, false);
+
+	}
+
 	// If loop is completed and all units are the same team, game is over
 	GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, FString::Printf(TEXT("COMBAT FINISHED")));
+
+	// Return
+	return true;
+
+}
+
+// Function for when player wins combat
+void ARPGGameMode::CombatWon() {
+
+	// Progress to next level
+	UGameplayStatics::OpenLevel(GetWorld(), NextLevel);
+
+}
+
+// Function for when player loses combat
+void ARPGGameMode::CombatLost() {
+
+	// Restart current combat
+	FName currentLevel = FName(GetWorld()->GetMapName());
+	UGameplayStatics::OpenLevel(GetWorld(), currentLevel);
 
 }
 
@@ -336,6 +389,9 @@ void ARPGGameMode::TakeEnemyTurn() {
 // Function to swap game state
 void ARPGGameMode::SwapState(EGameState NewState) {
 
+	// Reset navigator
+	Navigator = 0;
+
 	State = NewState;
 
 }
@@ -475,6 +531,28 @@ void ARPGGameMode::Navigate(bool Positive) {
 
 		break;
 
+		// In audio glossary
+	case (EGameState::Glossary):
+
+		max = AudioGlossary.Num() - 1;
+
+		// Clamp value based on array size
+		if (Navigator > max) {
+
+			Navigator = 0;
+
+		}
+		else if (Navigator < 0) {
+
+			Navigator = max;
+
+		}
+
+		// Play sound cue for glossary entry
+		PlaySound(AudioGlossary[Navigator].Sound);
+
+		break;
+
 	}
 
 }
@@ -555,6 +633,13 @@ void ARPGGameMode::Select() {
 
 		break;
 
+		// In audio glossary
+	case (EGameState::Glossary):
+
+		// Do nothing here as we handle TTS in blueprint
+
+		break;
+
 	}
 
 }
@@ -594,12 +679,23 @@ void ARPGGameMode::Refresh() {
 
 		break;
 
+		// In audio glossary
+	case (EGameState::Glossary):
+
+		// Play currently selected sound cue
+		PlaySound(AudioGlossary[Navigator].Sound);
+
+		break;
+
 	}
 
 }
 
 // Function to play the ready sound of all units currently alive in order of initiative
-void ARPGGameMode::InitiativeCheck() {
+float ARPGGameMode::InitiativeCheck() {
+
+	// Delay variable used to determine how long audio takes
+	float delay = 0.0f;
 
 	// Iterate through initiative order
 	for (int i = 0; i < InitiativeOrder.Num(); i++) {
@@ -610,7 +706,69 @@ void ARPGGameMode::InitiativeCheck() {
 
 		// Play ready sound of each unit with delay in between
 		timerDelegate = FTimerDelegate::CreateUObject(this, &ARPGGameMode::PlayReadySound, InitiativeOrder[i]);
-		GetWorldTimerManager().SetTimer(timerHandle, timerDelegate, (i * 1.25f) + 0.1f, false);
+		delay = (i * 1.25f) + 0.1f;
+		GetWorldTimerManager().SetTimer(timerHandle, timerDelegate, delay, false);
+
+	}
+
+	return delay + 0.75f;
+
+}
+
+// Function to open/close the audio glossary
+void ARPGGameMode::CheckGlossary() {
+
+	// Switch statement to determine what state we are in
+	switch (State) {
+
+		// Selecting a move to use
+	case (EGameState::MoveSelect):
+
+		// Play sound to indicate menu object has been selected
+		PlaySound(MenuClickSound);
+
+		// Store this state to return to later
+		PreviousState = EGameState::MoveSelect;
+
+		// Switch to audio glossary
+		SwapState(EGameState::Glossary);
+
+		break;
+
+		// Selecting targets
+	case (EGameState::TargetSelect):
+
+		// Play sound to indicate menu object has been selected
+		PlaySound(MenuClickSound);
+
+		// Store this state to return to later
+		PreviousState = EGameState::TargetSelect;
+
+		// Switch to audio glossary
+		SwapState(EGameState::Glossary);
+
+		break;
+
+		// Enemy turn, inputs not registered
+	case (EGameState::EnemyTurn):
+
+		break;
+
+		// Between turns, inputs not registered
+	case (EGameState::BetweenTurns):
+
+		break;
+
+		// In audio glossary
+	case (EGameState::Glossary):
+
+		// Play sound to indicate menu object has been selected
+		PlaySound(MenuClickSound);
+
+		// Return to state we accessed glossary from
+		SwapState(PreviousState);
+
+		break;
 
 	}
 
