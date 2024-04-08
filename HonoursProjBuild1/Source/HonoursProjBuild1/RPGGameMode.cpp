@@ -78,7 +78,7 @@ void ARPGGameMode::InitCombat() {
 
 	// Start first turn after a delay
 	timerDelegate = FTimerDelegate::CreateUObject(this, &ARPGGameMode::TurnStart);
-	GetWorldTimerManager().SetTimer(timerHandle, timerDelegate, delay, false);
+	GetWorldTimerManager().SetTimer(timerHandle, timerDelegate, (delay * Constants::DelayMod), false);
 
 }
 
@@ -112,7 +112,7 @@ void ARPGGameMode::TurnStart() {
 
 		// Have enemy unit take their turn after a delay
 		timerDelegate = FTimerDelegate::CreateUObject(this, &ARPGGameMode::TakeEnemyTurn);
-		GetWorldTimerManager().SetTimer(timerHandle, timerDelegate, 1.0f, false);
+		GetWorldTimerManager().SetTimer(timerHandle, timerDelegate, (1.0f * Constants::DelayMod), false);
 
 	}
 
@@ -151,7 +151,7 @@ void ARPGGameMode::NextTurn(float Delay) {
 
 		// Start next turn after the delay specified
 		timerDelegate = FTimerDelegate::CreateUObject(this, &ARPGGameMode::TurnStart);
-		GetWorldTimerManager().SetTimer(timerHandle, timerDelegate, Delay, false);
+		GetWorldTimerManager().SetTimer(timerHandle, timerDelegate, (Delay * Constants::DelayMod), false);
 
 	}
 
@@ -184,14 +184,14 @@ bool ARPGGameMode::VictoryCheck() {
 
 		// Open next level after a delay
 		timerDelegate = FTimerDelegate::CreateUObject(this, &ARPGGameMode::CombatWon);
-		GetWorldTimerManager().SetTimer(timerHandle, timerDelegate, 3.0f, false);
+		GetWorldTimerManager().SetTimer(timerHandle, timerDelegate, (3.0f * Constants::DelayMod), false);
 
 	}
 	else if (winners == ETeam::Enemy) {
 
 		// Restart current level after a delay
 		timerDelegate = FTimerDelegate::CreateUObject(this, &ARPGGameMode::CombatLost);
-		GetWorldTimerManager().SetTimer(timerHandle, timerDelegate, 3.0f, false);
+		GetWorldTimerManager().SetTimer(timerHandle, timerDelegate, (3.0f * Constants::DelayMod), false);
 
 	}
 
@@ -439,7 +439,7 @@ void ARPGGameMode::LethalCheck(FMove Move, ACreatureBase* Target) {
 
 		// Play appropriate sound
 		timerDelegate = FTimerDelegate::CreateUObject(this, &ARPGGameMode::PlaySound, MinLethalSound);
-		GetWorldTimerManager().SetTimer(timerHandle, timerDelegate, 0.01f, false);
+		GetWorldTimerManager().SetTimer(timerHandle, timerDelegate, (0.01f * Constants::DelayMod), false);
 
 	}
 	// Check whether an average damage roll will kill
@@ -447,7 +447,7 @@ void ARPGGameMode::LethalCheck(FMove Move, ACreatureBase* Target) {
 
 		// Play appropriate sound
 		timerDelegate = FTimerDelegate::CreateUObject(this, &ARPGGameMode::PlaySound, AvgLethalSound);
-		GetWorldTimerManager().SetTimer(timerHandle, timerDelegate, 0.01f, false);
+		GetWorldTimerManager().SetTimer(timerHandle, timerDelegate, (0.01f * Constants::DelayMod), false);
 
 	}
 
@@ -707,7 +707,7 @@ float ARPGGameMode::InitiativeCheck() {
 		// Play ready sound of each unit with delay in between
 		timerDelegate = FTimerDelegate::CreateUObject(this, &ARPGGameMode::PlayReadySound, InitiativeOrder[i]);
 		delay = (i * 1.25f) + 0.1f;
-		GetWorldTimerManager().SetTimer(timerHandle, timerDelegate, delay, false);
+		GetWorldTimerManager().SetTimer(timerHandle, timerDelegate, (delay * Constants::DelayMod), false);
 
 	}
 

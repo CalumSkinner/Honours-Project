@@ -3,6 +3,13 @@
 #include "Sound/SoundCue.h"
 #include "DataStructs.generated.h"
 
+namespace Constants {
+
+	// Constant used to modify game speed by altering delay length between actions
+	constexpr float DelayMod = 1.4f;
+
+}
+
 // Dice roller, contains static method used to roll a number of dice of a given size
 USTRUCT(BlueprintType)
 struct FDice {

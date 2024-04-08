@@ -116,7 +116,7 @@ void ACreatureBase::PlaySoundWithDelay(USoundCue* SoundCue, float Delay) {
 	timerDelegate = FTimerDelegate::CreateUObject(this, &ACreatureBase::PlaySound, SoundCue);
 
 	// Set timer to call PlaySound after the specified delay
-	GetWorldTimerManager().SetTimer(timerHandle, timerDelegate, Delay, false);
+	GetWorldTimerManager().SetTimer(timerHandle, timerDelegate, (Delay * Constants::DelayMod), false);
 
 }
 
